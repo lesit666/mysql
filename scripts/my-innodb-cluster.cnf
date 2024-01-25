@@ -1,0 +1,7 @@
+[mysqld]
+datadir=/u01/app/mysql
+port=3307
+socket=/u01/app/mysql/mysql.sock
+mysqlx_port=33070
+mysqlx_socket=/u01/app/mysql/mysql.x.sock
+log_error=/u01/app/mysql/mysqld.log

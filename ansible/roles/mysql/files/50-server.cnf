@@ -1,0 +1,49 @@
+[mysqld]
+
+# Basic Settings
+
+bind-address            = 0.0.0.0
+
+# Fine Tuning
+
+max_allowed_packet      = 1G
+thread_cache_size       = 4
+max_connections         = 100
+#thread_stack           = 192K
+
+# Logging and Replication
+
+general_log_file        = /var/log/mysql/mysqld-general.log
+general_log             = 1
+
+slow_query_log_file     = /var/log/mysql/mysqld-slow.log
+slow_query_log          = 1
+long_query_time         = 10
+log-queries-not-using-indexes
+min_examined_row_limit  = 1000
+
+#server_id              = 1
+log_bin                 = /var/lib/mysql/mysql-bin.log
+max_binlog_size         = 100M
+
+# Character sets
+
+character-set-server    = utf8mb4
+collation-server        = utf8mb4_general_ci
+
+# InnoDB
+
+innodb_buffer_pool_size = 128M
+
+# Performance Monitoring
+
+performance-schema      = ON
+
+# data loading
+
+secure_file_priv = ''
+# secure_file_priv = '/var/lib/mysql-files'
+
+# replication
+# gtid_mode = ON
+# enforce_gtid_consistency = ON

@@ -1,0 +1,34 @@
+---
+- name: configure mysql server ssl certificates
+  become: true
+  become_user: root
+  block:
+    - name: copy smallstep ca root and ssl certificates
+      copy:
+        src: "{{ smallstep_ssl_certs_shared_dir }}/{{ item }}"
+        dest: /var/lib/mysql/{{ item }}
+        owner: mysql
+        group: mysql
+        mode: '0640'
+      with_items:
+        - root_ca.crt
+        - "{{ ansible_hostname }}.crt"
+        - "{{ ansible_hostname }}.key"
+      tags: 
+        - copy_smallstep_ca_root_and_ssl_certs
+    - name: configure mysql ssl settings
+      ansible.builtin.template:
+        src: "60-ssl.cnf.j2"
+        dest: /etc/my.cnf.d/60-ssl.cnf
+        force: yes
+        group: mysql
+        owner: mysql
+      tags: 
+        - config_mysql_ssl_settings
+    - name: restart mysql systemd service (servers)
+      ansible.builtin.systemd: 
+        name: mysqld
+        state: restarted
+      tags:
+        - restart_mysql_systemd_svc
+    

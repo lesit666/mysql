@@ -1,0 +1,20 @@
+---
+- name: install root ca ssl certificate
+  become: true
+  become_user: root
+  block:
+    - name: move smallstep ca root and ssl certificates
+      shell: |
+        mv /tmp/private/root_ca.crt {{ smallstep_ssl_certs_shared_dir }}/root_ca.crt
+        mv /tmp/private/*.* {{ smallstep_ssl_certs_shared_dir }}/
+        chmod 644 {{ smallstep_ssl_certs_shared_dir }}/*
+      when: inventory_hostname in groups['mgmt']
+      tags: 
+        - move_smallstep_ca_root_cert
+    - name: trust root ca ssl certificate
+      shell: |
+        # step certificate install {{ smallstep_ssl_certs_shared_dir }}/root_ca.crt
+        cp {{ smallstep_ssl_certs_shared_dir }}/root_ca.crt /etc/pki/ca-trust/source/anchors/root_ca.crt
+        update-ca-trust
+      tags: 
+        - trust_root_ca_ssl_cert

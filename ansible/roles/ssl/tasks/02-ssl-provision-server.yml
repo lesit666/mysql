@@ -1,0 +1,46 @@
+---
+- name: provision smallstep ca server
+  become: true
+  become_user: root
+  block:
+    - name: install smallstep ca server packages
+      yum:
+        name:
+          - "{{ smallstep_rpm_shared_dir }}/step-ca_amd64.rpm"
+        state: present
+        update_cache: true
+        disable_gpg_check: true
+      when: ansible_os_family == 'RedHat'
+      tags: inst_smallstep_srv_pkgs
+    - name: create smallstep group
+      group:
+        name: "{{ smallstep_group }}"
+        gid: 10001
+        state: present
+      tags:
+        - create_smallstep_group
+    - name: create smallstep user
+      user:
+        name: "{{ smallstep_user }}"
+        password: "{{ smallstep_user_password | password_hash( 'sha512' ) }}"
+        comment: "Smallstep CA user"
+        home: "/etc/step-ca"
+        shell: /bin/bash
+        createhome: yes
+        uid: 10001
+        groups: "{{ smallstep_group }}"
+        state: present
+      tags:
+        - create_smallstep_user
+    - name: provide smallstep password files
+      copy:
+        src: "{{ item }}"
+        dest: "/etc/step-ca/{{ item }}"
+        owner: "{{ smallstep_user }}"
+        group: "{{ smallstep_group }}"
+        mode: 0600
+      with_items:
+        - smallstep-password
+        - smallstep-provisioner-password
+      tags: 
+        - provide_smallstep_pwd_files

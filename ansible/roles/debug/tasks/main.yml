@@ -1,0 +1,6 @@
+---  
+- name: debug
+  debug:
+#    msg: "{{ hostvars[].['mysql_galera_seqno'] }}"
+#    msg: "{{ hostvars[inventory_hostname]['mysql_galera_seqno'] }} {{ hostvars[inventory_hostname]['mysql_galera_safe_bootstrap'] }}"
+    msg: "{{ hostvars[inventory_hostname] }}"

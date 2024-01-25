@@ -1,0 +1,27 @@
+[Unit]
+Description=MySQL Server (InnoDB Cluster)
+After=network-online.target
+Wants=network-online.target
+After=syslog.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+User=mysql
+Group=mysql
+
+Type=notify      
+TimeoutSec=0
+
+ExecStart=/usr/sbin/mysqld --defaults-file=/etc/my-innodb-cluster.cnf
+
+LimitNOFILE = 10000
+
+Restart=on-failure
+
+RestartPreventExitStatus=1
+
+Environment=MYSQLD_PARENT_PID=1
+
+PrivateTmp=false

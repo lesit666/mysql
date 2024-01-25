@@ -1,0 +1,30 @@
+-- SQL Script
+-- This script is distributed on an "as is" basis
+-- without warranties or conditions of any kind.
+-- Feel free to distribute or use it.
+
+-- MySQL Server k6 account (for workloads)
+
+-- Drop User Account
+drop user if exists 'k6'@'%';
+
+-- Create User Account
+create user if not exists 'k6'@'%' identified by '{{ lab_user_password }}';
+
+-- Display User Accounts
+select User, Host from mysql.user where User = 'k6';
+
+-- Drop Role
+drop role if exists k6role;
+
+-- Create Role
+create role if not exists k6role;
+
+-- Display Role
+select User, Host from mysql.user where User = 'k6role';
+
+-- Grant Account Privileges
+grant all privileges on *.* to k6role;
+grant process, reload, show databases on *.* to k6role;
+grant k6role to 'k6'@'%';
+set default role k6role to 'k6'@'%';

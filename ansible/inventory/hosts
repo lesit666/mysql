@@ -1,0 +1,44 @@
+---
+all:
+  children:
+    mgmt:
+      hosts:
+        cntlrsrv.labs.io:
+    mysqls:
+      hosts:
+        mysqlsrv1.labs.io:
+        mysqlsrv2.labs.io:
+        mysqlsrv3.labs.io:
+    initial_mysql:
+      hosts:
+        mysqlsrv1.labs.io:
+    additional_mysql:
+      hosts:
+        mysqlsrv2.labs.io:
+        mysqlsrv3.labs.io:
+    router:
+      hosts:
+        router.labs.io:
+  hosts:
+    cntlrsrv.labs.io:
+      ansible_connection: local
+    mysqlsrv1.labs.io:
+      ansible_host: 10.0.0.201
+      # ansible_ssh_private_key_file: "/ssh-keys/labs"
+      ansible_user: labs
+      ansible_ssh_pass: MySQL.Labs_4ALL
+    mysqlsrv2.labs.io:
+      ansible_host: 10.0.0.202
+      # ansible_ssh_private_key_file: "/ssh-keys/labs"
+      ansible_user: labs
+      ansible_ssh_pass: MySQL.Labs_4ALL
+    mysqlsrv3.labs.io:
+      ansible_host: 10.0.0.203
+      # ansible_ssh_private_key_file: "/ssh-keys/labs"
+      ansible_user: labs
+      ansible_ssh_pass: MySQL.Labs_4ALL
+    router.labs.io:
+      ansible_host: 10.0.0.100
+      # ansible_ssh_private_key_file: "/ssh-keys/labs"
+      ansible_user: labs
+      ansible_ssh_pass: MySQL.Labs_4ALL

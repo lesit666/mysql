@@ -1,0 +1,96 @@
+-- SQL Script
+-- This script is distributed on an "as is" basis
+-- without warranties or conditions of any kind.
+-- Feel free to distribute or use it.
+
+-- MySQL Server monitor accounts (to monitor MySQL Server instances)
+
+-- Drop User Accounts
+drop user if exists 'monitor'@'%';
+drop user if exists 'monitor'@'localhost';
+drop user if exists 'monitor'@'{{ cntlrsrv_hostname }}.{{ domain }}';
+drop user if exists 'monitor'@'{{ mysqlsrv1_hostname }}.{{ domain }}';
+drop user if exists 'monitor'@'{{ mysqlsrv2_hostname }}.{{ domain }}';
+drop user if exists 'monitor'@'{{ mysqlsrv3_hostname }}.{{ domain }}';
+
+-- Create User Accounts
+create user if not exists 'monitor'@'%' identified by '{{ lab_user_password }}';
+create user if not exists 'monitor'@'localhost' identified by '{{ lab_user_password }}';
+create user if not exists 'monitor'@'{{ cntlrsrv_hostname }}.{{ domain }}' identified by '{{ lab_user_password }}';
+create user if not exists 'monitor'@'{{ mysqlsrv1_hostname }}.{{ domain }}' identified by '{{ lab_user_password }}';
+create user if not exists 'monitor'@'{{ mysqlsrv2_hostname }}.{{ domain }}' identified by '{{ lab_user_password }}';
+create user if not exists 'monitor'@'{{ mysqlsrv3_hostname }}.{{ domain }}' identified by '{{ lab_user_password }}';
+
+-- Display User Accounts
+select User, Host from mysql.user where User = 'monitor';
+
+-- Drop Role
+drop role if exists monrole;
+
+-- Create Role
+create role if not exists monrole;
+
+-- Display Role
+select User, Host from mysql.user where User = 'monrole' ;
+
+-- Grant Account Privileges
+grant select, insert, update, delete, drop on performance_schema.* to monrole;
+grant select on mysql.* to monrole;
+grant select, execute on sys.* to monrole;
+grant insert, update on sys.sys_config to monrole;
+grant super, process, reload, replication client, backup_admin, show databases on *.* to monrole;
+grant all privileges on hrdb.* to monrole;
+grant all privileges on crmdb.* to monrole;
+grant monrole to 'monitor'@'%';
+grant monrole to 'monitor'@'localhost';
+grant monrole to 'monitor'@'{{ cntlrsrv_hostname }}.{{ domain }}';
+grant monrole to 'monitor'@'{{ hostvars[inventory_hostname]["ansible_hostname"] }}.{{ domain }}';
+grant monrole to 'monitor'@'{{ mysqlsrv1_hostname }}.{{ domain }}';
+grant monrole to 'monitor'@'{{ mysqlsrv2_hostname }}.{{ domain }}';
+grant monrole to 'monitor'@'{{ mysqlsrv3_hostname }}.{{ domain }}';
+set default role monrole to 'monitor'@'%';
+set default role monrole to 'monitor'@'localhost';
+set default role monrole to 'monitor'@'{{ cntlrsrv_hostname }}.{{ domain }}';
+set default role monrole to 'monitor'@'{{ mysqlsrv1_hostname }}.{{ domain }}';
+set default role monrole to 'monitor'@'{{ mysqlsrv2_hostname }}.{{ domain }}';
+set default role monrole to 'monitor'@'{{ mysqlsrv3_hostname }}.{{ domain }}';
+
+-- grant select, insert, update, delete, drop on performance_schema.* to 'monitor'@'{{ hostvars[inventory_hostname]["ansible_hostname"] }}.{{ domain }}', 'monitor'@'%', 'monitor'@'localhost', 'monitor'@'{{ cntlrsrv_hostname }}.{{ domain }}';
+-- grant select, execute on sys.* to 'monitor'@'{{ hostvars[inventory_hostname]["ansible_hostname"] }}.{{ domain }}', 'monitor'@'%', 'monitor'@'localhost', 'monitor'@'{{ cntlrsrv_hostname }}.{{ domain }}';
+-- grant insert, update on sys.sys_config to 'monitor'@'{{ hostvars[inventory_hostname]["ansible_hostname"] }}.{{ domain }}', 'monitor'@'%', 'monitor'@'localhost', 'monitor'@'{{ cntlrsrv_hostname }}.{{ domain }}';
+-- grant super, process, binlog monitor, reload, replica monitor, show databases on *.* to 'monitor'@'{{ hostvars[inventory_hostname]["ansible_hostname"] }}.{{ domain }}', 'monitor'@'%', 'monitor'@'localhost', 'monitor'@'{{ cntlrsrv_hostname }}.{{ domain }}';
+-- grant select, delete, update, insert on *.* to 'monitor'@'{{ hostvars[inventory_hostname]["ansible_hostname"] }}.{{ domain }}', 'monitor'@'%', 'monitor'@'localhost', 'monitor'@'{{ cntlrsrv_hostname }}.{{ domain }}';
+
+-- Enable Performance Schema Actors (hr, crm and k6)
+update performance_schema.setup_actors set ENABLED = 'NO', HISTORY = 'NO' where HOST = '%' and USER = '%';
+delete from performance_schema.setup_actors where USER in ( 'hr', 'crm', 'k6', 'mysqld_exporter', 'monitor' );
+insert into performance_schema.setup_actors (HOST,USER,ROLE,ENABLED,HISTORY) values
+    ('%','hr','%','YES','YES'),
+    ('%','crm','%','YES','YES'),
+    ('%','k6','%','YES','YES'),
+    ('%','mysqld_exporter','%','YES','YES'),
+    ('%','monitor','%','YES','YES'),
+    ('localhost','monitor','%','YES','YES'),
+    ('{{ cntlrsrv_hostname }}.{{ domain }}','monitor','%','YES','YES'),
+    ('{{ cntlrsrv_hostname }}','monitor','%','YES','YES'),
+    ('{{ mysqlsrv1_hostname }}.{{ domain }}','monitor','%','YES','YES'),
+    ('{{ mysqlsrv1_hostname }}.{{ domain }}','monitor','monrole','YES','YES'),
+    ('{{ mysqlsrv1_hostname }}','monitor','%','YES','YES'),
+    ('{{ mysqlsrv1_hostname }}','monitor','monrole','YES','YES'),
+    ('{{ mysqlsrv2_hostname }}.{{ domain }}','monitor','%','YES','YES'),
+    ('{{ mysqlsrv2_hostname }}.{{ domain }}','monitor','monrole','YES','YES'),
+    ('{{ mysqlsrv2_hostname }}','monitor','%','YES','YES'),
+    ('{{ mysqlsrv2_hostname }}','monitor','monrole','YES','YES'),
+    ('{{ mysqlsrv3_hostname }}.{{ domain }}','monitor','%','YES','YES'),
+    ('{{ mysqlsrv3_hostname }}.{{ domain }}','monitor','monrole','YES','YES'),
+    ('{{ mysqlsrv3_hostname }}','monitor','%','YES','YES'),
+    ('{{ mysqlsrv3_hostname }}','monitor','monrole','YES','YES'),
+    ('%','monitor','monrole','YES','YES'),
+    ('localhost','monitor','monrole','YES','YES'),
+    ('{{ cntlrsrv_hostname }}','monitor','monrole','YES','YES'),
+    ('{{ cntlrsrv_hostname }}.{{ domain }}','monitor','monrole','YES','YES');
+    
+update performance_schema.setup_consumers set ENABLED = 'YES' where NAME like '%statements%' or NAME like '%transactions%' or NAME like '%waits%';
+
+-- install plugin query_response_time_audit soname 'query_response_time.so';
+-- install plugin query_response_time soname 'query_response_time.so';

@@ -1,0 +1,8 @@
+[mysqld]
+
+# SSL/TLS
+
+ssl-ca = /var/lib/mysql/root_ca.crt
+ssl-cert = /var/lib/mysql/{{ ansible_hostname }}.crt
+ssl-key = /var/lib/mysql/{{ ansible_hostname }}.key
+require-secure-transport = on

@@ -1,0 +1,164 @@
+services:
+  mysqlsrv1:
+    build: 
+      context: mysql-ctx
+    container_name: ${LABS_MYSQL1_NAME}
+    hostname: ${LABS_MYSQL1_NAME}
+    domainname: ${LABS_DOMAIN}
+    privileged: true
+    stop_signal: RTMIN+3
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
+    restart: "no"
+    ports:
+      - "22251:22" # ssh
+      - "3316:3306" # mysql classic
+      - "33160:33060" # mysql devx api
+    networks:
+      labs-net:
+        ipv4_address: ${LABS_MYSQL1_IP_ADDR}
+        aliases:
+          - ${LABS_MYSQL1_NAME}.${LABS_DOMAIN}
+    volumes:
+      - mysqlsrv1-dir:/local
+      - "./scripts:/scripts"
+      - "./stage:/stage"
+      - shared-dir:/shared
+  mysqlsrv2:
+    image: mysql_hibernate_spring-mysqlsrv1:latest
+    container_name: ${LABS_MYSQL2_NAME}
+    hostname: ${LABS_MYSQL2_NAME}
+    domainname: ${LABS_DOMAIN}
+    privileged: true
+    stop_signal: RTMIN+3
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
+    restart: "no"
+    ports:
+      - "22252:22" # ssh
+      - "3326:3306" # mysql classic
+      - "33260:33060" # mysql devx api
+    networks:
+      labs-net:
+        ipv4_address: ${LABS_MYSQL2_IP_ADDR} # check it's not already been used by other bridges
+        aliases:
+          - ${LABS_MYSQL2_NAME}.${LABS_DOMAIN}
+    volumes:
+      - mysqlsrv2-dir:/local
+      - "./scripts:/scripts"
+      - "./stage:/stage"
+      - shared-dir:/shared
+  mysqlsrv3:
+    image: mysql_hibernate_spring-mysqlsrv1:latest
+    container_name: ${LABS_MYSQL3_NAME}
+    hostname: ${LABS_MYSQL3_NAME}
+    domainname: ${LABS_DOMAIN}
+    privileged: true
+    stop_signal: RTMIN+3
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
+    restart: "no"
+    ports:
+      - "22253:22" # ssh
+      - "3336:3306" # mysql classic
+      - "33360:33060" # mysql devx api
+    networks:
+      labs-net:
+        ipv4_address: ${LABS_MYSQL3_IP_ADDR} # check it's not already been used by other bridges
+        aliases:
+          - ${LABS_MYSQL3_NAME}.${LABS_DOMAIN}
+    volumes:
+      - mysqlsrv3-dir:/local
+      - "./scripts:/scripts"
+      - "./stage:/stage"
+      - shared-dir:/shared
+  router:
+    build:
+      context: router-ctx
+    container_name: ${LABS_ROU_NAME}
+    hostname: ${LABS_ROU_NAME}
+    domainname: ${LABS_DOMAIN}
+    privileged: true
+    stop_signal: RTMIN+3
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
+    restart: "no"
+    ports:
+      - "22255:22" # ssh
+      - "6446:6446" # mysql router read
+      - "6447:6447" # mysql router write
+      - "3310:3310" # mysql router bootstrap
+      - "7001:7001" # mysql router http admin
+    networks:
+      labs-net:
+        ipv4_address: ${LABS_ROU_IP_ADDR} # check it's not already been used by other bridges
+        aliases:
+          - ${LABS_ROU_NAME}.${LABS_DOMAIN}
+    volumes:
+      - router-dir:/local
+      - "./scripts:/scripts"
+      - "./stage:/stage"
+      - shared-dir:/shared
+  cntlrsrv:
+    build: 
+      context: cntlr-ctx
+    container_name: ${LABS_CNTLR_NAME}
+    hostname: ${LABS_CNTLR_NAME}
+    domainname: ${LABS_DOMAIN}
+    privileged: true
+    stop_signal: RTMIN+3
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2048M
+    restart: "no"
+    ports:
+      - "22250:22" # ssh
+      - "4443:443" # pmm grafana
+      - "18443:18443" # mysql enterprise monitor https server
+      - "18080:18080" # mysql enterprise monitor http server
+      - "13306:13306" # mysql enterprise monitor mysql server
+      - "5665:5665" # k6 dashboard
+    networks:
+      labs-net:
+        ipv4_address: ${LABS_CNTLR_IP_ADDR} # check it's not already been used by other bridges
+        aliases:
+          - ${LABS_CNTLR_NAME}.${LABS_DOMAIN}
+    volumes:
+      - cntlrsrv-dir:/local
+      - "./scripts:/scripts"
+      - "./stage:/stage"
+      - type: bind
+        source: ./ansible
+        target: /ansible
+      - shared-dir:/shared
+      - "./ssh/keys:/ssh-keys"
+networks:
+  labs-net:
+    driver: bridge
+    attachable: true
+    name: labs-bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${LABS_SUBNET}
+volumes:
+  mysqlsrv1-dir:
+  mysqlsrv2-dir:
+  mysqlsrv3-dir:
+  cntlrsrv-dir:
+  shared-dir:
+  router-dir:

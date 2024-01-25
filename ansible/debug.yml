@@ -1,0 +1,4 @@
+- hosts:
+    mgmt
+  roles: 
+    - debug

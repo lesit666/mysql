@@ -1,0 +1,49 @@
+---
+
+- name: provision smallstep cli binary
+  import_tasks:
+    01-ssl-provision-client.yml
+  when: inventory_hostname not in groups['datamart']
+  tags:
+    - provision_smallstep_ca_cli_bin
+- name: provision smallstep ca server binary
+  import_tasks:
+    02-ssl-provision-server.yml
+  when: inventory_hostname in groups['mgmt']
+  tags:
+    - provision_smallstep_ca_server_bin
+- name: configure smallstep ca server
+  import_tasks:
+    03-ssl-configure.yml
+  when: inventory_hostname in groups['mgmt']
+  tags:
+    - config_smallstep_ca_server
+- name: start smallstep ca server
+  import_tasks:
+    04-ssl-setup-systemd.yml
+  when: inventory_hostname in groups['mgmt']
+  tags:
+    - start_smallstep_ca_server
+- name: create mysql, router and manager ssl certificates
+  import_tasks:
+    05-ssl-create-certificates.yml
+  when: inventory_hostname in groups['mgmt']
+  tags:
+    - create_mysql_server_router_ssl_certificates
+- name: trust root ca ssl certificate
+  import_tasks:
+    06-ssl-install-root-ca-certificate.yml
+  tags:
+    - install_root_ca_ssl_certificate
+- name: setup mysql ssl configuration
+  import_tasks:
+    07-ssl-configure-mysql-certificates.yml
+  when: inventory_hostname in groups['mysqls']
+  tags:
+    - setup_mysql_ssl_config
+- name: setup mysql client ssl configuration
+  import_tasks:
+    08-ssl-configure-mysql-client-certificates.yml
+  tags:
+    - setup_mysql_client_ssl_config
+    

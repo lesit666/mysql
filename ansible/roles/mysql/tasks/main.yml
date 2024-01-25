@@ -1,0 +1,123 @@
+---
+- name: setup mysql
+  become: true
+  become_user: root
+  throttle: 1
+  block:
+    - name: install mysql packages (servers)
+      ansible.builtin.dnf: 
+        name: 
+          - "{{ mysql_rpm_stage_dir }}/server/mysql-commercial-server-{{ mysql_server_version }}-1.1.{{ os_version }}.{{ arch }}.rpm"
+          - "{{ mysql_rpm_stage_dir }}/server/mysql-commercial-client-{{ mysql_server_version }}-1.1.{{ os_version }}.{{ arch }}.rpm"
+          - "{{ mysql_rpm_stage_dir }}/server/mysql-commercial-client-plugins-{{ mysql_server_version }}-1.1.{{ os_version }}.{{ arch }}.rpm"
+          - "{{ mysql_rpm_stage_dir }}/server/mysql-commercial-icu-data-files-{{ mysql_server_version }}-1.1.{{ os_version }}.{{ arch }}.rpm"
+          - "{{ mysql_rpm_stage_dir }}/server/mysql-commercial-common-{{ mysql_server_version }}-1.1.{{ os_version }}.{{ arch }}.rpm"
+          - "{{ mysql_rpm_stage_dir }}/server/mysql-commercial-libs-{{ mysql_server_version }}-1.1.{{ os_version }}.{{ arch }}.rpm"
+          - "{{ mysql_rpm_stage_dir }}/server/mysql-commercial-backup-{{ mysql_server_version }}-1.1.{{ os_version }}.{{ arch }}.rpm"
+        state: present
+        update_cache: true
+        disable_gpg_check: true
+      when: inventory_hostname in groups['mysqls']
+      tags:
+        - install_mysql_packages_srvs
+    - name: install mysql packages (clients)
+      ansible.builtin.dnf: 
+        name: 
+          - "{{ mysql_rpm_stage_dir }}/server/mysql-commercial-client-{{ mysql_server_version }}-1.1.{{ os_version }}.{{ arch }}.rpm"
+          - "{{ mysql_rpm_stage_dir }}/server/mysql-commercial-client-plugins-{{ mysql_server_version }}-1.1.{{ os_version }}.{{ arch }}.rpm"
+          - "{{ mysql_rpm_stage_dir }}/server/mysql-commercial-common-{{ mysql_server_version }}-1.1.{{ os_version }}.{{ arch }}.rpm"
+          - "{{ mysql_rpm_stage_dir }}/server/mysql-commercial-libs-{{ mysql_server_version }}-1.1.{{ os_version }}.{{ arch }}.rpm"
+          - "{{ mysql_rpm_stage_dir }}/server/mysql-commercial-backup-{{ mysql_server_version }}-1.1.{{ os_version }}.{{ arch }}.rpm"
+          - "{{ mysql_rpm_stage_dir }}/shell/mysql-shell-commercial-{{ mysql_server_version }}-1.1.{{ os_version }}.{{ arch }}.rpm"
+        state: present
+        update_cache: true
+        disable_gpg_check: true
+      when: (inventory_hostname in groups['mgmt']) or (inventory_hostname in groups['router'])
+      tags:
+        - install_mysql_clnt_bkp_shell_packages_srvs
+    - name: configure mysql server settings (servers)
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        backup: yes
+      with_items: 
+        - { src: 50-server.cnf, dest: /etc/my.cnf.d/50-server.cnf }
+        - { src: default.my.cnf, dest: /etc/my.cnf }
+      when: inventory_hostname in groups['mysqls']
+      tags:
+        - config_mysql_server_settings_srvs
+    - name: create /var/log/mysql directory (servers)
+      ansible.builtin.file:
+        path: /var/log/mysql
+        state: directory
+        owner: mysql
+        group: mysql
+        mode: '0755'
+      when: inventory_hostname in groups['mysqls']
+      tags:
+        - create_var_log_mysql_dir_srvs
+    - name: cleanup mysql server data directory (servers)
+      ansible.builtin.shell: |
+          rm -Rf /var/lib/mysql/*
+          rm -Rf /var/log/mysql/*
+          rm -Rf /var/log/mysqld.log
+      when: inventory_hostname in groups['mysqls']
+      tags:
+        - cleanup_mysql_server_data_dir_srvs
+    - name: start mysql systemd service (servers)
+      ansible.builtin.systemd: 
+        name: mysqld
+        state: restarted
+      when: inventory_hostname in groups['mysqls']
+      tags:
+        - start_mysql_systemd_service_srvs
+    - name: store root temporary password (servers)
+      shell: |
+        grep password /var/log/mysqld.log | awk -F"A temporary password is generated for root@localhost: " '{print $2}'
+      register: root_tmp_pwd
+      when: inventory_hostname in groups['mysqls']
+      tags:
+        - store_root_tmp_pwd_srvs
+    - name: reset root password (servers)
+      shell: |
+        mysql -uroot -p'{{ root_tmp_pwd.stdout }}' --connect-expired-password \
+          -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password }}';"
+      when: inventory_hostname in groups['mysqls']
+      tags: 
+        - reset_root_pwd_srvs
+    - name: transfer mysql s ample schemas (server 1)
+      ansible.builtin.copy:
+        src: sample-schemas
+        dest: /tmp
+        directory_mode: yes
+      when: inventory_hostname in groups['initial_mysql']
+      tags:
+        - transfer_mysql_sample_schemas_srv1
+    - name: setup mysql sample schemas (server 1)
+      ansible.builtin.shell: | 
+        cd /tmp/sample-schemas
+        mysql -s -uroot -p{{ mysql_root_password }} --local-infile=1 < ./main.sql
+      when: inventory_hostname in groups['initial_mysql']
+      tags:
+        - setup_mysql_sample_schemas_srv1
+    - name: provision mysql k6, monitor sql scripts (server 1)
+      ansible.builtin.template:
+        src: "{{ item }}.sql.j2"
+        dest: /tmp/{{ item }}.sql
+        force: yes
+      with_items:
+        - k6
+        - monitor
+      when: inventory_hostname in groups['mysqls']
+      tags: 
+        - provision_mysql_k6_mon_sql_scripts_srv1
+    - name: setup mysql k6, monitor accounts
+      ansible.builtin.shell: | 
+        mysql -s -uroot -p{{ mysql_root_password }} < /tmp/{{ item }}.sql
+      with_items:
+        - k6
+        - monitor
+      when: inventory_hostname in groups['mysqls']
+      tags:
+        - setup_mysql_k6_mon_accnts_srv1
+  tags: setup_mysql

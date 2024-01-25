@@ -1,0 +1,13 @@
+---
+- name: provision smallstep client
+  become: true
+  become_user: root
+  block:
+    - name: install smallstep client packages
+      yum:
+        name:
+          - "{{ smallstep_rpm_shared_dir }}/step-cli_amd64.rpm"
+        state: present
+        update_cache: true
+        disable_gpg_check: true
+      tags: inst_smallstep_clnt_pkgs

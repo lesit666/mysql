@@ -1,0 +1,35 @@
+---
+- name: configure smallstep ca
+  become: true
+  become_user: step
+  block:
+    - name: initialize smallstep ssl ca server
+      shell: |
+        step ca init \
+          --name=MySQL-Labs \
+          --deployment-type=standalone \
+          --dns={{ cntlrsrv_hostname }}.{{ domain }} \
+          --dns={{ cntlrsrv_ip }} \
+          --address={{ cntlrsrv_ip }}:443 \
+          --provisioner=mysql@{{ domain }} \
+          --password-file=/etc/step-ca/smallstep-password \
+          --provisioner-password-file=/etc/step-ca/smallstep-provisioner-password
+      tags: 
+        - init_smallstep_ssl_ca_server
+    - name: create ca.json configuration backup
+      shell: |
+        cp /etc/step-ca/.step/config/ca.json /etc/step-ca/.step/config/ca.json.ORIG
+      tags: 
+        - create_ca_json_conf_bkp
+    - name: extend tls certificate lifetime
+      shell: |
+        ca=$(jq '.authority |= {
+          "claims": {
+              "minTLSCertDuration": "5m",
+              "maxTLSCertDuration": "3600h",
+              "defaultTLSCertDuration": "3600h"
+          }
+          } + .' /etc/step-ca/.step/config/ca.json)
+        echo $ca > /etc/step-ca/.step/config/ca.json
+      tags: 
+        - extend_tls_cert_lifetime

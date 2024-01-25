@@ -1,0 +1,56 @@
+[mysqlbackup]
+### trace level from INFO=0 to FINEST=3
+
+trace=0
+
+### connection (use socket or host) to get metadata from the mysql server
+
+port=3306
+socket=/var/lib/mysql/mysql.sock
+protocol=socket
+user=root
+password=MySQL.Labs_4ALL
+
+### server repository (data dir, log bin base name and index name, innodb data, redo and undo dirs)
+
+datadir=/var/lib/mysql
+log_bin=/var/lib/mysql/mysql-bin
+log_bin_index=/var/lib/mysql/mysql-bin.index
+innodb_data_home_dir=/var/lib/mysql
+innodb_log_group_home_dir=/var/lib/mysql
+innodb_undo_directory=/var/lib/mysql
+
+### single-file backup image and backup directory, innodb system datafile specs
+
+# backup_image=file:///stage/backup/<unique-dir>/sfb.mbi
+# backup_dir=/stage/backup/<unique-dir>
+# backup_innodb_data_home_dir=/stage/backup/<unique-dir>/innodb_data
+# backup_innodb_data_file_path=ibdata1:12M:autoextend
+# backup_innodb_log_group_home_dir=/stage/backup/<unique-dir>/innodb_redo
+# backup_innodb_undo_directory=/stage/backup/<unique-dir>/innodb_undo
+# with_timestamp
+comments='mysqlsrv1 backup (including hrdb and cmrdb databases)'
+
+### compression (algorithms: zlib, lz4, lzma, punch-hole, none, and compress level from 0 to 9)
+
+# compress
+# compress_algorithm=zlib
+# compress_level=1
+
+### performance (multi-thread with buffers [each 16MB], read/write threads, process (apply bkp logs) threads, apply incremental bkps threads)
+
+number_of_buffers=14
+read_threads=2
+process_threads=2
+write_threads=2
+# limit_memory=1000
+
+### message Logging
+# messages_logdir=/stage/backup/<unique-dir>/logs
+show_progress=stdout
+progress_interval=1
+
+### encryption
+# encrypt
+# key=
+# key_file=

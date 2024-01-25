@@ -1,0 +1,71 @@
+# var yaml file used by ansible
+
+# network domain
+domain: "labs.io" 
+
+# cntlrsrv network settings
+cntlrsrv_hostname: "cntlrsrv"
+cntlrsrv_ip: "10.0.0.10" # custom 10.0.0.0 (intnet)
+
+# mysqlsrv1 network settings
+mysqlsrv1_hostname: "mysqlsrv1"
+mysqlsrv1_ip: "10.0.0.201" # custom 10.0.0.0 (intnet)
+
+# mysqlsrv2 network settings
+mysqlsrv2_hostname: "mysqlsrv2"
+mysqlsrv2_ip: "10.0.0.202" # custom 10.0.0.0 (intnet)
+
+# mysqlsrv3 network settings
+mysqlsrv3_hostname: "mysqlsrv3"
+mysqlsrv3_ip: "10.0.0.203" # custom 10.0.0.0 (intnet)
+
+# routersrv network settings
+router_hostname: "router"
+router_ip: "10.0.0.100" # custom 10.0.0.0 (intnet)
+
+# os user and group settings
+lab_user: "labs"
+lab_user_password: "MySQL.Labs_4ALL"
+lab_group: "labs"
+
+# misc settings
+os_version: "el9"
+arch: "x86_64"
+
+# mysql settings
+mysql_version: "8.0.35"
+mysql_root_password: "MySQL.Labs_4ALL"
+mysql_hrdb_user: "hr"
+mysql_hrdb_user_password: "MySQL.Labs_4ALL"
+mysql_user: "mysql"
+mysql_user_password: "MySQL.Labs_4ALL"
+mysql_group: "mysql"
+mysql_rpm_stage_dir: "/stage/mysql"
+mysql_server_version: "8.0.35"
+
+# k6 settings
+golang_version: "1.21.6"
+xk6_version: "0.48.0"
+
+# grafana, prometheus and loki settings
+grafana_version: "10.2.3"
+prometheus_version: "2.48.1"
+node_exporter_version: "1.7.0"
+mysqld_exporter_version: "0.15.1"
+loki_version: "2.9.3"
+loki_user: "loki"
+loki_user_pwd: "MySQL.Labs_4ALL"
+loki_group: "loki"
+
+# pmm settings
+pmm_client_version: "2.41.0"
+
+# ant settings
+ant_version: "1.10.14"
+
+# smallstep variables
+smallstep_user: step
+smallstep_user_password: MySQL.Labs_4ALL
+smallstep_group: step
+smallstep_rpm_shared_dir: /stage/ssl/smallstep
+smallstep_ssl_certs_shared_dir: /stage/ssl/certs

@@ -1,0 +1,37 @@
+---
+- name: create mysql (servers and router) ssl certificates
+  become: true
+  become_user: step
+  block:
+    - name: create mysql servers ssl certificates
+      shell: |
+        mkdir -p /tmp/private
+        rm -Rf /tmp/private/{{ item.host }}.crt
+        rm -Rf /tmp/private/{{ item.host }}.key
+        step ca certificate {{ item.host }}.{{ domain }} \
+          /tmp/private/{{ item.host }}.crt \
+          /tmp/private/{{ item.host }}.key \
+          --san {{ item.host }}.{{ domain }} \
+          --san {{ item.ip_addr }} \
+          --provisioner-password-file=/etc/step-ca/smallstep-provisioner-password  
+      with_items:
+        - { host: "{{ mysqlsrv1_hostname }}", ip_addr: "{{ mysqlsrv1_ip }}" }
+        - { host: "{{ mysqlsrv2_hostname }}", ip_addr: "{{ mysqlsrv2_ip }}" }
+        - { host: "{{ mysqlsrv3_hostname }}", ip_addr: "{{ mysqlsrv3_ip }}" }
+        - { host: "{{ router_hostname }}", ip_addr: "{{ router_ip }}" }
+      tags: 
+        - create_mysql_srvs_router_ssl_certs
+    # - name: copy smallstep ca root certificate (built-in umask command causes error)
+    #   copy:
+    #     src: /etc/step-ca/.step/certs/root_ca.crt
+    #     dest: /tmp/root_ca.crt
+    #     remote_src: true
+    #     mode: preserve
+    #   tags: 
+    #     - copy_smallstep_ca_root_cert
+    - name: copy smallstep ca root certificate
+      shell: |
+        rm -Rf /tmp/private/root_ca.crt
+        cp /etc/step-ca/.step/certs/root_ca.crt /tmp/private/root_ca.crt
+      tags: 
+        - copy_smallstep_ca_root_cert

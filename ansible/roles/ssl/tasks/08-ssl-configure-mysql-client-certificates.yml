@@ -1,0 +1,25 @@
+---
+- name: configure mysql client ssl certificates
+  become: true
+  become_user: root
+  block:
+    - name: create smallstep ca ssl client certificates
+      shell: |
+        rm -Rf {{ smallstep_ssl_certs_shared_dir }}/{{ item }}-client.crt
+        rm -Rf {{ smallstep_ssl_certs_shared_dir }}/{{ item }}-client.key
+
+        step ca certificate {{ item }}.{{ ansible_domain }} \
+          {{ smallstep_ssl_certs_shared_dir }}/{{ item }}-client.crt \
+          {{ smallstep_ssl_certs_shared_dir }}/{{ item }}-client.key \
+          --ca-url=https://{{ cntlrsrv_hostname }}.{{ domain }}:443 \
+          --root={{ smallstep_ssl_certs_shared_dir }}/root_ca.crt \
+          --provisioner-password-file=/etc/step-ca/smallstep-provisioner-password
+      with_items:
+        - cntlrsrv
+        - router
+        - mysqlsrv1
+        - mysqlsrv2
+        - mysqlsrv3
+      when: inventory_hostname in groups['mgmt']
+      tags: 
+        - create_smallstep_client_ssl_certs
